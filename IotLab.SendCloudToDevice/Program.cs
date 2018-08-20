@@ -19,7 +19,7 @@ namespace IotLab.SendCloudToDevice
 
             Console.WriteLine("Press any key to send a C2D message.");
             Console.ReadLine();
-            var msg = new C2DMessage { From = "Aldrigo" };
+            var msg = new C2DMessage { From = "Raffaele" };
             SendCloudToDeviceMessageAsync(msg).Wait();
             Console.WriteLine("Message sent!");
 

@@ -5,6 +5,7 @@ using System;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Azure.Devices.Shared;
+using System.Threading;
 
 namespace IotLab.SimulatedDevice
 {
@@ -17,6 +18,11 @@ namespace IotLab.SimulatedDevice
 
         static void Main(string[] args)
         {
+            var cancellationSource = new CancellationTokenSource();
+            Console.CancelKeyPress += (object sender, ConsoleCancelEventArgs cancelArgs) => {
+                cancellationSource.Cancel();
+            };
+
             Console.WriteLine("Mars orbital station\n");
 
             deviceClient = DeviceClient.Create(iotHubUri, new DeviceAuthenticationWithRegistrySymmetricKey(deviceId, deviceKey), TransportType.Mqtt);
@@ -31,7 +37,7 @@ namespace IotLab.SimulatedDevice
                 {
                     Name = "HAL",
                     Version = new Version(9, 0, 0, 0),
-                    Manufacturer = "Aldrigos"
+                    Manufacturer = "Reply"
                 };
                 reportedProperties["Commands"] = "Command:\n\tshutdown\nParams:\n\tforce: bool\n\tUser: string\nDescription:\n\tShuts down the system\n\tShutdown force will force an emergency shutdown if system doesn't respond";
                 deviceClient.UpdateReportedPropertiesAsync(reportedProperties).Wait();
@@ -43,23 +49,23 @@ namespace IotLab.SimulatedDevice
 
             deviceClient.SetMethodHandlerAsync("shutdown", ShutDownMethod, null).Wait();
 
-            Task.WaitAll( SendDeviceToCloudMessagesAsync(), ReceiveC2dAsync() );
+            Task.WaitAll( SendDeviceToCloudMessagesAsync(cancellationSource.Token), ReceiveC2dAsync(cancellationSource.Token) );
 
             Console.WriteLine("Quitting");
             Console.ReadLine();
         }
 
-        private static async Task SendDeviceToCloudMessagesAsync()
+        private static async Task SendDeviceToCloudMessagesAsync(CancellationToken ct)
         {
             double minTemperature = 20,
                 minHumidity = 60;
             int messageId = 1;
             var rand = new Random();
 
-            while (true)
+            while (!ct.IsCancellationRequested)
             {
-                double currentTemperature = minTemperature + rand.NextDouble() * 15;
-                double currentHumidity = minHumidity + rand.NextDouble() * 20;
+                double currentTemperature = minTemperature + rand.NextDouble() * 15,
+                    currentHumidity = minHumidity + rand.NextDouble() * 20;
 
                 var telemetryDataPoint = new
                 {
@@ -69,8 +75,8 @@ namespace IotLab.SimulatedDevice
                     humidity = currentHumidity,
                     errors = true
                 };
-                var messageString = JsonConvert.SerializeObject(telemetryDataPoint);
-                var message = new Message(Encoding.ASCII.GetBytes(messageString));
+
+                var message = new Message(Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(telemetryDataPoint)));
                 message.Properties.Add("temperatureAlert", (currentTemperature > 30) ? "true" : "false");
 
                 await deviceClient.SendEventAsync(message);
@@ -80,10 +86,10 @@ namespace IotLab.SimulatedDevice
             }
         }
 
-        private static async Task ReceiveC2dAsync()
+        private static async Task ReceiveC2dAsync(CancellationToken ct)
         {
             //Console.WriteLine("\nReceiving cloud to device messages from service");
-            while (true)
+            while (!ct.IsCancellationRequested)
             {
                 Message receivedMessage = await deviceClient.ReceiveAsync();
                 if (receivedMessage == null) continue;
