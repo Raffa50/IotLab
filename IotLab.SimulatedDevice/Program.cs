@@ -32,14 +32,17 @@ namespace IotLab.SimulatedDevice
             try
             {
                 var twin = deviceClient.GetTwinAsync().Result;
-                var reportedProperties = new TwinCollection();
-                reportedProperties["SoftwareInfo"] = new SoftwareInfo
+                var reportedProperties = new TwinCollection
                 {
-                    Name = "HAL",
-                    Version = new Version(9, 0, 0, 0),
-                    Manufacturer = "Reply"
+                    ["SoftwareInfo"] = new SoftwareInfo
+                    {
+                        Name = "HAL",
+                        Version = new Version(9, 0, 0, 0),
+                        Manufacturer = "Reply"
+                    },
+                    ["HumanFriendly"] = false,
+                    ["Commands"] = "Command:\n\tshutdown\nParams:\n\tForce: bool\n\tUser: string\nDescription:\n\tShuts down the system\n\tShutdown force will force an emergency shutdown if system doesn't respond"
                 };
-                reportedProperties["Commands"] = "Command:\n\tshutdown\nParams:\n\tforce: bool\n\tUser: string\nDescription:\n\tShuts down the system\n\tShutdown force will force an emergency shutdown if system doesn't respond";
                 deviceClient.UpdateReportedPropertiesAsync(reportedProperties).Wait();
             } catch(Exception ex)
             {
