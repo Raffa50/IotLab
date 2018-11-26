@@ -183,6 +183,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CommandDescription.cs" />
+    <Compile Include="DeviceProperties.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

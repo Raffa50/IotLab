@@ -16,6 +16,23 @@ namespace IotLab.SimulatedDevice
             deviceId = Config.DeviceId,
             deviceKey = "I+A6Pxh9Tjdq4OkxdU/meC5Wiy+L/ddpMihk9E/OjwQ=";
 
+        public static readonly DeviceProperties deviceProps = new DeviceProperties
+        {
+            SoftwareInfo = new SoftwareInfo
+            {
+                Name = "HAL",
+                Version = new Version(9, 0, 0, 0),
+                Manufacturer = "Reply"
+            },
+            Errors = new[] { "Sensor_Probe_1", "AI_fault", "Not_HumanFriendly" },
+            Commands = new[] { new CommandDescription
+            {
+                Name = "shutdown",
+                Parameters = new[] { "force: boolean", "user: string" },
+                Description = "Shuts down the system\n\tShutdown force will force an emergency shutdown if system doesn't respond"
+            } }
+        };
+
         static void Main(string[] args)
         {
             var cancellationSource = new CancellationTokenSource();
@@ -31,23 +48,13 @@ namespace IotLab.SimulatedDevice
             #region twin reportedProperties
             try
             {
-                var twin = deviceClient.GetTwinAsync().Result;
-                var reportedProperties = new TwinCollection
-                {
-                    ["SoftwareInfo"] = new SoftwareInfo
-                    {
-                        Name = "HAL",
-                        Version = new Version(9, 0, 0, 0),
-                        Manufacturer = "Reply"
-                    },
-                    ["HumanFriendly"] = false,
-                    ["Commands"] = "Command:\n\tshutdown\nParams:\n\tForce: bool\n\tUser: string\nDescription:\n\tShuts down the system\n\tShutdown force will force an emergency shutdown if system doesn't respond"
-                };
+                var reportedProperties = new TwinCollection(JsonConvert.SerializeObject(deviceProps));
                 deviceClient.UpdateReportedPropertiesAsync(reportedProperties).Wait();
             } catch(Exception ex)
             {
                 Console.WriteLine("Can't update twin reported properties");
             }
+            deviceClient.SetDesiredPropertyUpdateCallbackAsync(OnDesiredChange, null).Wait();
             #endregion
 
             deviceClient.SetMethodHandlerAsync("shutdown", ShutDownMethod, null).Wait();
@@ -85,8 +92,37 @@ namespace IotLab.SimulatedDevice
                 await deviceClient.SendEventAsync(message);
                 //Console.WriteLine("{0} > Sending message: {1}", DateTime.Now, messageString);
 
-                await Task.Delay(3000);
+                await Task.Delay(TimeSpan.FromSeconds(5));
             }
+        }
+
+        private static async Task OnDesiredChange(TwinCollection desiredProperties, object userContext)
+        {
+
+            DeviceProperties newProps;
+            try
+            {
+                newProps = JsonConvert.DeserializeObject<DeviceProperties>(desiredProperties.ToJson());
+            } catch(JsonException ex)
+            {
+                Console.WriteLine("Invalid properties!");
+                return;
+            }
+
+            if(newProps.SoftwareInfo != null)
+            {
+                if (newProps.SoftwareInfo.Name != null)
+                    deviceProps.SoftwareInfo.Name = newProps.SoftwareInfo.Name;
+                if (newProps.SoftwareInfo.Version != null)
+                    deviceProps.SoftwareInfo.Version = newProps.SoftwareInfo.Version;
+            }
+            if(newProps.Errors != null)
+            {
+                deviceProps.Errors = newProps.Errors;
+            }
+
+            var newReported = new TwinCollection(JsonConvert.SerializeObject(deviceProps));
+            await deviceClient.UpdateReportedPropertiesAsync(newReported);
         }
 
         private static async Task ReceiveC2dAsync(CancellationToken ct)
