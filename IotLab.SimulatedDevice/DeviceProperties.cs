@@ -9,8 +9,8 @@ namespace IotLab.SimulatedDevice
 {
     public class DeviceProperties
     {
+        public IDictionary<string, string> Errors { get; set; }
+        public IDictionary<string, CommandDescription> Commands { get; set; }
         public SoftwareInfo SoftwareInfo { get; set; }
-        public IEnumerable<string> Errors { get; set; }
-        public CommandDescription[] Commands { get; set; }
     }
 }

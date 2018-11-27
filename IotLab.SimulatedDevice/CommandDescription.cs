@@ -9,7 +9,7 @@ namespace IotLab.SimulatedDevice
     public class CommandDescription
     {
         public string Name { get; set; }
-        public string[] Parameters { get; set; }
+        public IDictionary<string, string> Parameters { get; set; }
         public string Description { get; set; }
     }
 }

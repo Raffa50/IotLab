@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Azure.Devices.Shared;
 using System.Threading;
+using System.Collections.Generic;
 
 namespace IotLab.SimulatedDevice
 {
@@ -24,13 +25,18 @@ namespace IotLab.SimulatedDevice
                 Version = new Version(9, 0, 0, 0),
                 Manufacturer = "Reply"
             },
-            Errors = new[] { "Sensor_Probe_1", "AI_fault", "Not_HumanFriendly" },
-            Commands = new[] { new CommandDescription
-            {
-                Name = "shutdown",
-                Parameters = new[] { "force: boolean", "user: string" },
-                Description = "Shuts down the system\n\tShutdown force will force an emergency shutdown if system doesn't respond"
-            } }
+            Errors = new Dictionary<string, string> {
+                { "Sensor_Probe_1", "Error" }, {"AI_fault", "True"}, {"HumanFriendly", "False" }
+            },
+            Commands = new Dictionary<string, CommandDescription> {
+                { "shutdown", new CommandDescription
+                    {
+                        Name = "shutdown",
+                        Parameters = new Dictionary<string, string> { { "force", "boolean" }, { "user", "string" } },
+                        Description = "Shuts down the system\n\tShutdown force will force an emergency shutdown if system doesn't respond"
+                    }
+                }
+            }
         };
 
         static void Main(string[] args)
