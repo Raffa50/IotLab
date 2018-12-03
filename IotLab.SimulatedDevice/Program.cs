@@ -19,6 +19,7 @@ namespace IotLab.SimulatedDevice
 
         public static readonly DeviceProperties deviceProps = new DeviceProperties
         {
+            ShipName = "Discovery1",
             SoftwareInfo = new SoftwareInfo
             {
                 Name = "HAL",
@@ -46,7 +47,7 @@ namespace IotLab.SimulatedDevice
                 cancellationSource.Cancel();
             };
 
-            Console.WriteLine("Mars orbital station\n");
+            Console.WriteLine("Discovery1 on-board console\n");
 
             deviceClient = DeviceClient.Create(iotHubUri, new DeviceAuthenticationWithRegistrySymmetricKey(deviceId, deviceKey), TransportType.Mqtt);
             deviceClient.ProductInfo = "HAL-9000";

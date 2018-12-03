@@ -38,7 +38,7 @@ namespace IotLab.ReadDeviceToCloudMessages
 
         private static async Task ReceiveMessagesFromDeviceAsync(string partition, CancellationToken ct)
         {
-            var eventHubReceiver = eventHubClient.GetConsumerGroup("team01").CreateReceiver(partition, DateTime.UtcNow);
+            var eventHubReceiver = eventHubClient.GetConsumerGroup("dave").CreateReceiver(partition, DateTime.UtcNow);
             while (!ct.IsCancellationRequested)
             {
                 EventData eventData = await eventHubReceiver.ReceiveAsync();
